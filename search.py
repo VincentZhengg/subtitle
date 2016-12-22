@@ -1,7 +1,8 @@
 import re
+import os
 
-filename = "The.Big.Bang.Theory.S10E11.720p.HDTV.X264-DIMENSION.HI.srt"
-search_word = ["possum", "wheezy", "pedestrian", "sprinkle"]
+# filename = "The.Big.Bang.Theory.S10E11.720p.HDTV.X264-DIMENSION.HI.srt"
+# search_word = ["possum", "wheezy", "pedestrian", "sprinkle"]
 
 
 class ParseSegmentException(Exception):
@@ -11,20 +12,40 @@ class ParseSegmentException(Exception):
     """
 
 
+class SubtitleFileNotAllowed(Exception):
+    """
+    This exception is raised if the subtitle file is not valid. Usually because the file ext is
+     not in the allowed list
+    """
+
+
 class Subtitle:
 
-    def __init__(self, filename):
-        self.filename = filename
+    def __init__(self, directory):
+        self.directory = directory
+
+    def extension_allowed(self, filename):
+        if "." in filename:
+            extension = filename.split(".")[-1]
+            return extension.lower() in ["srt", "ass", "ssa"]
+        raise SubtitleFileNotAllowed("{} is not valid, please check".format(filename))
+
+    def list_files(self):
+        files = os.listdir(self.directory)
+        for filename in files:
+            if self.extension_allowed(filename):
+                yield filename
 
     def get_segment(self):
-        with open(self.filename, mode="r", encoding="utf-8") as f:
-            segment = []
-            for line in f:
-                if line != "\n":
-                    segment.append(line.strip())
-                else:
-                    yield segment
-                    segment = []
+        for filename in self.list_files():
+            with open(filename, mode="r", encoding="utf-8") as f:
+                segment = []
+                for line in f:
+                    if line != "\n":
+                        segment.append(line.strip())
+                    else:
+                        yield segment
+                        segment = []
 
     def get_all_sentences(self):
         punctuation = (".", "?")
@@ -46,6 +67,7 @@ class Subtitle:
         except IndexError:
             raise ParseSegmentException
 
+
     def get_word_sentence(self, word):
         match_list = []
         for sentence in self.get_all_sentences():
@@ -54,4 +76,7 @@ class Subtitle:
                 match_list.append(sentence)
         return "\n **************\n".join(match_list)
 
+    def move(self, directory):
+        """move all the subtitle files to the specify directory"""
+        pass
 

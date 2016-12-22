@@ -74,7 +74,7 @@ def insert_into_redis(raw_word, img_file_name):
 
 
 def insert_into_db(word):
-    subtitle = Subtitle(filename="")
+    subtitle = Subtitle(directory="")
     sentence = subtitle.get_word_sentence(word)
     collection = Collection(
         name=word,
